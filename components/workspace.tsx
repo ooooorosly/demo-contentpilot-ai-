@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 
 export type Tone = "blue" | "green" | "purple" | "amber" | "red" | "neutral";
 
@@ -26,6 +26,30 @@ const navigationItems = [
   { label: "AI 策略中心", href: "/hub" }
 ];
 
+const repositoryBasePaths = ["/demo-contentpilot-ai-", "/demo-contentpilot-ai", "/contentpilot-ai-demo"];
+
+function normalizeRoutePath(path: string) {
+  const pathWithoutQuery = path.split(/[?#]/)[0] || "/";
+  const matchingBasePath = repositoryBasePaths.find(
+    (basePath) => pathWithoutQuery === basePath || pathWithoutQuery.startsWith(`${basePath}/`)
+  );
+  const pathWithoutBase =
+    matchingBasePath
+      ? pathWithoutQuery.replace(matchingBasePath, "")
+      : pathWithoutQuery;
+  const normalized = pathWithoutBase.length > 1 ? pathWithoutBase.replace(/\/+$/, "") : pathWithoutBase;
+
+  return normalized || "/";
+}
+
+function getHashRoutePath() {
+  if (typeof window === "undefined" || !window.location.hash.startsWith("#/")) {
+    return "";
+  }
+
+  return normalizeRoutePath(window.location.hash.slice(1));
+}
+
 export function toneClasses(tone: Tone) {
   const tones: Record<Tone, string> = {
     blue: "bg-blue-50 text-brand-blue",
@@ -41,6 +65,17 @@ export function toneClasses(tone: Tone) {
 
 export function AppShell({ children, title = "工作台" }: { children: ReactNode; title?: string }) {
   const pathname = usePathname();
+  const [hashRoutePath, setHashRoutePath] = useState("");
+  const activeRoutePath = hashRoutePath || normalizeRoutePath(pathname);
+
+  useEffect(() => {
+    const updateHashRoutePath = () => setHashRoutePath(getHashRoutePath());
+
+    updateHashRoutePath();
+    window.addEventListener("hashchange", updateHashRoutePath);
+
+    return () => window.removeEventListener("hashchange", updateHashRoutePath);
+  }, []);
 
   return (
     <main className="h-dvh overflow-hidden px-4 py-4 text-ink-950 sm:px-6 lg:px-8">
@@ -58,7 +93,7 @@ export function AppShell({ children, title = "工作台" }: { children: ReactNod
 
           <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">
             {navigationItems.map((item) => {
-              const active = pathname === item.href;
+              const active = activeRoutePath === item.href;
 
               return (
                 <Link
