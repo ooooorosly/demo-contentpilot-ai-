@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const isGithubPages = process.env.GITHUB_PAGES === "true";
-const githubRepository = process.env.GITHUB_REPOSITORY?.split("/")[1] ?? "contentpilot-ai-demo";
+const githubRepository = process.env.GITHUB_REPOSITORY?.split("/")[1] ?? "demo-contentpilot-ai";
 
 const nextConfig = {
   ...(isGithubPages
